@@ -130,6 +130,7 @@ namespace CppAst
                     AutoSquashTypedef = options.AutoSquashTypedef,
                     ParseSystemIncludes = options.ParseSystemIncludes,
                     ParseAttributeEnabled = options.ParseAttributes,
+                    TargetVendor = options.TargetVendor,
                 };
                 var compilation = builder.RootCompilation;
 

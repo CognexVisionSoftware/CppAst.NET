@@ -36,6 +36,8 @@ namespace CppAst
 
         public bool ParseAttributeEnabled { get; set; }
 
+        public string TargetVendor  { get; set; }
+
         public CppCompilation RootCompilation => _rootCompilation;
 
         public CXChildVisitResult VisitTranslationUnit(CXCursor cursor, CXCursor parent, void* data)
@@ -1694,6 +1696,9 @@ namespace CppAst
 
                 case CXTypeKind.CXType_Char_S:
                     return CppPrimitiveType.Char;
+
+                case CXTypeKind.CXType_Char_U:
+                    return TargetVendor.Equals("arm") ? CppPrimitiveType.Char : CppPrimitiveType.UnsignedChar;
 
                 case CXTypeKind.CXType_WChar:
                     return CppPrimitiveType.WChar;
