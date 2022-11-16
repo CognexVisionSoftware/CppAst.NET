@@ -442,10 +442,13 @@ namespace CppAst
                     };
                     break;
                 case CppCommentKind.VerbatimLine:
-                    cppComment = new CppCommentVerbatimLine()
+                    var verbatimLine = new CppCommentVerbatimLine();
+                    verbatimLine.CommandName = cxComment.BlockCommandComment_CommandName.ToString();
+                    for (uint i = 0; i < cxComment.BlockCommandComment_NumArgs; i++)
                     {
-                        Text = cxComment.VerbatimLineComment_Text.ToString()
-                    };
+                        verbatimLine.Arguments.Add(cxComment.BlockCommandComment_GetArgText(i).ToString());
+                    }
+                    cppComment = verbatimLine;
                     break;
                 case CppCommentKind.Full:
                     cppComment = new CppCommentFull();
@@ -1855,7 +1858,7 @@ namespace CppAst
             var templateCppTypes = new List<CppType>();
             for (var templateIndex = 0; templateIndex < numTemplateArguments; ++templateIndex)
             {
-                var templateArg = type.GetTemplateArgumentAsType((uint)templateIndex);
+                var templateArg = type.GetTemplateArgument((uint)templateIndex).AsType;
                 var templateCppType = GetCppType(templateArg.Declaration, templateArg, cursor, data);
                 templateCppTypes.Add(templateCppType);
             }

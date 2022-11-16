@@ -25,14 +25,11 @@
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <Version>0.8.0-alpha-007</Version>
+    <Version>0.8.0-alpha-008</Version>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ClangSharp" Version="10.0.0-beta" />
-  </ItemGroup>
-
-  <ItemGroup>
+    <PackageReference Include="ClangSharp.cgnx" Version="12.0.1" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.*" PrivateAssets="All" />
   </ItemGroup>
 </Project>
