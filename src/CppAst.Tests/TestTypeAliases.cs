@@ -164,5 +164,77 @@ template<typename T1> using MyStructT = MyStruct<T1>;
                 }
             );
         }
+        [Test]
+        public void TestTemplatedNamespacedTypeFromInclude()
+        {
+            var text = @"
+#include ""test_external_namespace.h""
+
+class MyClass
+{
+public:
+  N1::TemplatedClass<int>& get();
+};
+";
+
+            ParseAssert(text,
+                compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
+                    Assert.AreEqual(1, compilation.Classes.Count);
+
+                    Assert.AreEqual("MyClass", compilation.Classes[0].Name);
+                    var myClass = compilation.FindByName<CppClass>("MyClass");
+                    Assert.AreEqual(compilation.Classes[0], myClass);
+
+                    var namespaceClasses = compilation.Namespaces[0].Classes;
+                    Assert.AreEqual(2, namespaceClasses.Count);
+
+                    Assert.AreEqual("TemplatedClass", namespaceClasses[0].Name);
+                    Assert.AreEqual("Args", namespaceClasses[0].TemplateParameters[0].GetDisplayName());
+                    Assert.AreEqual("TemplatedClass", namespaceClasses[1].Name);
+                    Assert.AreEqual("int", namespaceClasses[1].TemplateParameters[0].GetDisplayName());
+                }
+            );
+        }
+
+      [Test]
+      public void TestTemplatedNamespacedType()
+      {
+        var text = @"
+//Content of test_external_namespace.h
+namespace N1 {
+    template <typename... Args>
+    class TemplatedClass {};
+}
+
+class MyClass
+{
+public:
+  N1::TemplatedClass<int>& get();
+};
+";
+
+        ParseAssert(text,
+            compilation =>
+            {
+                Assert.False(compilation.HasErrors);
+                Assert.AreEqual(1, compilation.Classes.Count);
+
+                Assert.AreEqual("MyClass", compilation.Classes[0].Name);
+                var myClass = compilation.FindByName<CppClass>("MyClass");
+                Assert.AreEqual(compilation.Classes[0], myClass);
+
+                var namespaceClasses = compilation.Namespaces[0].Classes;
+                Assert.AreEqual(2, namespaceClasses.Count);
+
+                Assert.AreEqual("TemplatedClass", namespaceClasses[0].Name);
+                Assert.AreEqual("Args", namespaceClasses[0].TemplateParameters[0].GetDisplayName());
+                Assert.AreEqual("TemplatedClass", namespaceClasses[1].Name);
+                Assert.AreEqual("int", namespaceClasses[1].TemplateParameters[0].GetDisplayName());
+
+            }
+        );
+      }
     }
 }

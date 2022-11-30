@@ -133,11 +133,7 @@ namespace CppAst
                     }
                     else
                     {
-                        var templateParameters = ParseTemplateParameters(cursor, cursor.Type, new CXClientData((IntPtr)data));
-                        if (templateParameters != null)
-                        {
-                            cppClass.TemplateParameters.AddRange(templateParameters);
-                        }
+                        cppClass.TemplateParameters.AddRange(ParseTemplateParameters(cursor, cursor.Type, new CXClientData((IntPtr)data)));
                     }
 
                     defaultContainerVisibility = cursor.Kind == CXCursorKind.CXCursor_ClassDecl ? CppVisibility.Private : CppVisibility.Public;
@@ -1579,9 +1575,17 @@ namespace CppAst
             }
 
             var contextContainer = GetOrCreateDeclarationContainer(cursor.SemanticParent, data);
-            var underlyingTypeDefType = GetCppType(cursor.TypedefDeclUnderlyingType.Declaration, cursor.TypedefDeclUnderlyingType, cursor, data);
-
             var typedefName = GetCursorSpelling(cursor);
+
+            CppType underlyingTypeDefType;
+            if (cursor.DeclKind == CX_DeclKind.CX_DeclKind_TypeAliasTemplate)
+            {
+                underlyingTypeDefType = GetCppType(cursor.TemplatedDecl.TypedefDeclUnderlyingType.Declaration, cursor.TemplatedDecl.TypedefDeclUnderlyingType, cursor, data);
+            }
+            else
+            {
+                underlyingTypeDefType = GetCppType(cursor.TypedefDeclUnderlyingType.Declaration, cursor.TypedefDeclUnderlyingType, cursor, data);
+            }
 
             if (AutoSquashTypedef && underlyingTypeDefType is ICppMember cppMember && (string.IsNullOrEmpty(cppMember.Name) || typedefName == cppMember.Name))
             {
@@ -1590,7 +1594,7 @@ namespace CppAst
             }
             else
             {
-                var typedef = new CppTypedef(GetCursorSpelling(cursor), underlyingTypeDefType) { Visibility = contextContainer.CurrentVisibility };
+                var typedef = new CppTypedef(typedefName, underlyingTypeDefType) { Visibility = contextContainer.CurrentVisibility };
                 contextContainer.DeclarationContainer.Typedefs.Add(typedef);
                 type = typedef;
             }
@@ -1768,11 +1772,7 @@ namespace CppAst
                 case CXTypeKind.CXType_Unexposed:
                     {
                         var cppUnexposedType = new CppUnexposedType(type.ToString()) { SizeOf = (int)type.SizeOf };
-                        var templateParameters = ParseTemplateParameters(cursor, type, new CXClientData((IntPtr)data));
-                        if (templateParameters != null)
-                        {
-                            cppUnexposedType.TemplateParameters.AddRange(templateParameters);
-                        }
+                        cppUnexposedType.TemplateParameters.AddRange(ParseTemplateParameters(cursor, type, new CXClientData((IntPtr)data)));
                         return cppUnexposedType;
                     }
 
@@ -1852,15 +1852,27 @@ namespace CppAst
 
         private List<CppType> ParseTemplateParameters(CXCursor cursor, CXType type, CXClientData data)
         {
-            var numTemplateArguments = type.NumTemplateArguments;
-            if (numTemplateArguments < 0) return null;
-
             var templateCppTypes = new List<CppType>();
+            var numTemplateArguments = type.NumTemplateArguments;
+            if (numTemplateArguments < 0) return templateCppTypes;
+
             for (var templateIndex = 0; templateIndex < numTemplateArguments; ++templateIndex)
             {
-                var templateArg = type.GetTemplateArgument((uint)templateIndex).AsType;
-                var templateCppType = GetCppType(templateArg.Declaration, templateArg, cursor, data);
-                templateCppTypes.Add(templateCppType);
+                var templateArg = type.Declaration.GetTemplateArgument((uint)templateIndex);
+                switch (templateArg.kind)
+                {
+                    case CXTemplateArgumentKind.CXTemplateArgumentKind_Type:
+                        var templateArgType = templateArg.AsType;
+                        templateCppTypes.Add(GetCppType(templateArgType.Declaration, templateArgType, cursor, data));
+                        break;
+                    case CXTemplateArgumentKind.CXTemplateArgumentKind_Pack:
+                        for (uint packIndex = 0; packIndex < templateArg.NumPackElements; ++packIndex)
+                        {
+                            var templateArgPackType = templateArg.GetPackElement(packIndex).AsType;
+                            templateCppTypes.Add(GetCppType(templateArgPackType.Declaration, templateArgPackType, cursor, data));
+                        }
+                        break;
+                }
             }
 
             return templateCppTypes;
