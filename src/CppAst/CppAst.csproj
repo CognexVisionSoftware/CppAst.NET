@@ -29,7 +29,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ClangSharp.cgnx" Version="12.0.1" />
+    <PackageReference Include="ClangSharp.cgnx" Version="12.0.2" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.*" PrivateAssets="All" />
   </ItemGroup>
 </Project>
