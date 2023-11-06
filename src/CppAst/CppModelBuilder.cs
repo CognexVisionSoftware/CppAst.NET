@@ -1240,7 +1240,7 @@ namespace CppAst
                 LinkageKind = GetLinkage(cursor.Linkage),
             };
 
-            if (cursor.Kind == CXCursorKind.CXCursor_Constructor)
+            if (cursor.AsFunction.kind == CXCursorKind.CXCursor_Constructor)
             {
                 var cppClass = (CppClass)container;
                 cppFunction.IsConstructor = true;

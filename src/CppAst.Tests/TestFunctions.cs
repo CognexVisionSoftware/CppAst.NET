@@ -73,7 +73,7 @@ char function3(char);
         [Test]
         public void TestSimpleArm()
         {
-             var options = new CppParserOptions();
+            var options = new CppParserOptions();
 
             options.TargetCpu = CppTargetCpu.ARM64;
             options.TargetCpuSub = string.Empty;
@@ -100,7 +100,7 @@ char function3(char);
                         Assert.AreEqual("function0", cppFunction.Name);
                         Assert.AreEqual(0, cppFunction.Parameters.Count);
                         Assert.AreEqual("void", cppFunction.ReturnType.ToString());
-                        
+
                         var cppFunction1 = compilation.FindByName<CppFunction>("function0");
                         Assert.AreEqual(cppFunction, cppFunction1);
                     }
@@ -111,10 +111,10 @@ char function3(char);
                         Assert.AreEqual(2, cppFunction.Parameters.Count);
                         Assert.AreEqual("a", cppFunction.Parameters[0].Name);
                         Assert.AreEqual(CppTypeKind.Primitive, cppFunction.Parameters[0].Type.TypeKind);
-                        Assert.AreEqual(CppPrimitiveKind.Int, ((CppPrimitiveType) cppFunction.Parameters[0].Type).Kind);
+                        Assert.AreEqual(CppPrimitiveKind.Int, ((CppPrimitiveType)cppFunction.Parameters[0].Type).Kind);
                         Assert.AreEqual("b", cppFunction.Parameters[1].Name);
                         Assert.AreEqual(CppTypeKind.Primitive, cppFunction.Parameters[1].Type.TypeKind);
-                        Assert.AreEqual(CppPrimitiveKind.Float, ((CppPrimitiveType) cppFunction.Parameters[1].Type).Kind);
+                        Assert.AreEqual(CppPrimitiveKind.Float, ((CppPrimitiveType)cppFunction.Parameters[1].Type).Kind);
                         Assert.AreEqual("int", cppFunction.ReturnType.ToString());
 
                         var cppFunction1 = compilation.FindByName<CppFunction>("function1");
@@ -145,8 +145,8 @@ char function3(char);
                 },
                 options
             );
-        }        
-        
+        }
+
         [Test]
         public void TestFunctionPrototype()
         {
@@ -276,7 +276,7 @@ int function1();
                         Assert.True(cppFunction.IsPublicExport());
                     }
                 },
-                new CppParserOptions() {  }
+                new CppParserOptions() { }
             );
 
             ParseAssert(text,
@@ -366,6 +366,128 @@ void function0(T t);
 
                 }
             );
+        }
+
+        [Test]
+        public void TestTemplatedConstructor()
+        {
+            ParseAssert(@"
+class TemplatedClass
+{
+public:
+  template <typename... Args>
+  TemplatedClass(Args... args); // Templated, variadic, default, converting
+
+  template <typename T>
+  TemplatedClass(T value, double anotherValue); // Templated, normal
+};
+", compilation =>
+      {
+          Assert.False(compilation.HasErrors);
+          Assert.AreEqual(1, compilation.Classes.Count);
+          var cppClass = compilation.Classes[0];
+          Assert.AreEqual(2, cppClass.Constructors.Count);
+          Assert.AreEqual(1, cppClass.Constructors[0].Parameters.Count);
+          Assert.AreEqual(1, cppClass.Constructors[0].TemplateParameters.Count);
+          // Variadic types are still unexposed
+          Assert.AreEqual(CppTypeKind.Unexposed, cppClass.Constructors[0].Parameters[0].Type.TypeKind);
+          Assert.AreEqual("Args...", cppClass.Constructors[0].Parameters[0].Type.ToString());
+
+          Assert.AreEqual(2, cppClass.Constructors[1].Parameters.Count);
+          Assert.AreEqual(1, cppClass.Constructors[1].TemplateParameters.Count);
+          Assert.AreEqual("T", cppClass.Constructors[1].TemplateParameters[0].FullName);
+          Assert.AreEqual("value", cppClass.Constructors[1].Parameters[0].Name);
+          Assert.AreEqual("double", cppClass.Constructors[1].Parameters[1].Type.ToString());
+      });
+        }
+
+
+        [Test]
+        public void TestConstructor()
+        {
+            ParseAssert(@"
+class MyClass
+{
+public:
+  MyClass(); // Default
+  MyClass(const MyClass&); // Copy
+  MyClass(MyClass&&); // Move
+  MyClass(int a); // Converting
+  MyClass(int a, int b); // Normal
+};
+", compilation =>
+      {
+          Assert.False(compilation.HasErrors);
+          Assert.AreEqual(1, compilation.Classes.Count);
+          var cppClass = compilation.Classes[0];
+          Assert.AreEqual(5, cppClass.Constructors.Count);
+
+          var defaultConstructor = cppClass.Constructors[0];
+          Assert.AreEqual(0, defaultConstructor.Parameters.Count);
+          Assert.True(defaultConstructor.IsConstructor);
+
+          var copyConstructor = cppClass.Constructors[1];
+          Assert.AreEqual(1, copyConstructor.Parameters.Count);
+          Assert.AreEqual("const MyClass&", copyConstructor.Parameters[0].Type.ToString());
+          Assert.True(copyConstructor.IsConstructor);
+
+          var moveConstructor = cppClass.Constructors[2];
+          Assert.AreEqual(1, moveConstructor.Parameters.Count);
+          Assert.AreEqual("MyClass &&", moveConstructor.Parameters[0].Type.ToString());
+          Assert.True(moveConstructor.IsConstructor);
+
+          var convertingConstructor = cppClass.Constructors[3];
+          Assert.AreEqual(1, convertingConstructor.Parameters.Count);
+          Assert.AreEqual("int", convertingConstructor.Parameters[0].Type.ToString());
+          Assert.True(convertingConstructor.IsConstructor);
+
+          var normalConstructor = cppClass.Constructors[4];
+          Assert.AreEqual(2, normalConstructor.Parameters.Count);
+          Assert.AreEqual("int", normalConstructor.Parameters[0].Type.ToString());
+          Assert.AreEqual("int", normalConstructor.Parameters[1].Type.ToString());
+      });
+        }
+
+        [Test]
+        public void TestDefaultConstructor()
+        {
+            ParseAssert(@"
+class MyClass
+{
+public:
+  MyClass() = default;
+};",
+       compilation =>
+       {
+           Assert.False(compilation.HasErrors);
+           Assert.AreEqual(1, compilation.Classes.Count);
+           var cppClass = compilation.Classes[0];
+           Assert.AreEqual(1, cppClass.Constructors.Count);
+           var defaultConstructor = cppClass.Constructors[0];
+           Assert.AreEqual(0, defaultConstructor.Parameters.Count);
+           Assert.True(defaultConstructor.IsConstructor);
+       });
+
+        }
+
+        [Test]
+        public void TestImplicitConstructor()
+        {
+            ParseAssert(@"
+class MyClass
+{
+  public:
+    int a;
+};",
+        compilation =>
+        {
+            Assert.False(compilation.HasErrors);
+            Assert.AreEqual(1, compilation.Classes.Count);
+            var cppClass = compilation.Classes[0];
+            // Compiler generated constructors are not parsed in CppAST;
+            // they have to be explicitly declared.
+            Assert.AreEqual(0, cppClass.Constructors.Count);
+        });
         }
 
     }
