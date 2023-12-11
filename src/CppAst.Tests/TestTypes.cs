@@ -356,7 +356,7 @@ public:
                     Assert.AreEqual(templatedClass.Functions.Count, 2);
                     Assert.AreEqual(templatedClass.TemplateKind, CppTemplateKind.TemplateClass);
                     Assert.AreEqual(templatedClass.TemplateParameters.Count, 2);
-                    Assert.AreEqual(templatedClass.TemplateSpecializedArguments.Count, 0);
+                    Assert.AreEqual(templatedClass.TemplateSpecializedArguments.Count, 1);
 
                     var T = templatedClass.TemplateParameters[0];
                     Assert.True(T is CppTemplateParameterType);
@@ -366,6 +366,10 @@ public:
                     Assert.True(N is CppTemplateParameterNonType);
                     Assert.AreEqual((N as CppTemplateParameterNonType).Name, "N");
                     Assert.AreEqual((N as CppTemplateParameterNonType).NoneTemplateType.GetDisplayName(), "unsigned int");
+
+                    var specN = templatedClass.TemplateSpecializedArguments[0];
+                    Assert.AreEqual(specN.ArgKind, CppTemplateArgumentKind.AsInteger);
+                    Assert.AreEqual(specN.ArgAsInteger, 2);
 
                     var operatorPlus = templatedClass.Functions[0];
                     Assert.AreEqual(operatorPlus.Name, "operator+");
@@ -383,7 +387,7 @@ public:
                     var otherType = ((other.Type as CppReferenceType).ElementType as CppQualifiedType).ElementType as CppClass;
                     Assert.AreEqual(otherType.TemplateKind, CppTemplateKind.TemplateClass);
                     Assert.AreEqual(otherType.TemplateParameters.Count, 2);
-                    Assert.AreEqual(otherType.TemplateSpecializedArguments.Count, 0);
+                    Assert.AreEqual(otherType.TemplateSpecializedArguments.Count, 1);
                     Assert.AreEqual(otherType.Name, "TemplatedClass");
 
                     T = otherType.TemplateParameters[0];
@@ -394,6 +398,10 @@ public:
                     Assert.True(N is CppTemplateParameterNonType);
                     Assert.AreEqual((N as CppTemplateParameterNonType).Name, "N");
                     Assert.AreEqual((N as CppTemplateParameterNonType).NoneTemplateType.GetDisplayName(), "unsigned int");
+
+                    specN = otherType.TemplateSpecializedArguments[0];
+                    Assert.AreEqual(specN.ArgKind, CppTemplateArgumentKind.AsInteger);
+                    Assert.AreEqual(specN.ArgAsInteger, 2);
 
                     var operatorMinus = templatedClass.Functions[1];
                     Assert.AreEqual(operatorMinus.Name, "operator-");
@@ -411,7 +419,7 @@ public:
                     var other2Type = ((other2.Type as CppReferenceType).ElementType as CppQualifiedType).ElementType as CppClass;
                     Assert.AreEqual(other2Type.TemplateKind, CppTemplateKind.TemplateClass);
                     Assert.AreEqual(other2Type.TemplateParameters.Count, 2);
-                    Assert.AreEqual(otherType.TemplateSpecializedArguments.Count, 0);
+                    Assert.AreEqual(other2Type.TemplateSpecializedArguments.Count, 1);
                     Assert.AreEqual(other2Type.Name, "TemplatedClass");
 
                     T = other2Type.TemplateParameters[0];
@@ -422,6 +430,10 @@ public:
                     Assert.True(N is CppTemplateParameterNonType);
                     Assert.AreEqual((N as CppTemplateParameterNonType).Name, "N");
                     Assert.AreEqual((N as CppTemplateParameterNonType).NoneTemplateType.GetDisplayName(), "unsigned int");
+
+                    specN = other2Type.TemplateSpecializedArguments[0];
+                    Assert.AreEqual(specN.ArgKind, CppTemplateArgumentKind.AsInteger);
+                    Assert.AreEqual(specN.ArgAsInteger, 2);
                 }
 
                 {
