@@ -1308,8 +1308,10 @@ namespace CppAst
 
             //We need ignore the function define out in the class definition here(Otherwise it will has two same functions here~)!
             var semKind = destinationCursor.SemanticParent.Kind;
-            if ((semKind == CXCursorKind.CXCursor_StructDecl || semKind == CXCursorKind.CXCursor_ClassDecl)
-                && destinationCursor.LexicalParent != destinationCursor.SemanticParent)
+            if ((semKind == CXCursorKind.CXCursor_StructDecl ||
+                 semKind == CXCursorKind.CXCursor_ClassDecl ||
+                 semKind == CXCursorKind.CXCursor_ClassTemplate)
+                 && destinationCursor.LexicalParent != destinationCursor.SemanticParent)
             {
                 return null;
             }
@@ -1324,12 +1326,17 @@ namespace CppAst
             if (cursor.Kind == CXCursorKind.CXCursor_Constructor)
             {
                 cppFunction.IsConstructor = true;
+                cppClass.Constructors.Add(cppFunction);
+            }
             else if (cursor.Kind == CXCursorKind.CXCursor_Destructor)
             {
                 var cppClass = (CppClass)container;
                 cppFunction.IsDestructor = true;
                 cppClass.Destructors.Add(cppFunction);
             }
+            else
+            {
+                container.Functions.Add(cppFunction);
             }
 
             if (cursor.kind == CXCursorKind.CXCursor_FunctionTemplate)

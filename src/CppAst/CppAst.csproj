@@ -33,7 +33,7 @@
     <None Include="../../img/cppast.png" Pack="true" PackagePath="/logo.png" />
     <None Include="../../readme.md" Pack="true" PackagePath="/" />
 
-    <PackageReference Include="ClangSharp" Version="15.0.1" />
+    <PackageReference Include="ClangSharp" Version="15.0.2" />
   </ItemGroup>
 
   <ItemGroup>

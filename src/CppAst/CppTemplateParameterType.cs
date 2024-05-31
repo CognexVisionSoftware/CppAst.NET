@@ -71,6 +71,10 @@ namespace CppAst
                 }
 
                 return hashCode;
+            }
+        }
+
+        /// <inheritdoc />
         public override CppType GetCanonicalType() => this;
 
         /// <inheritdoc />
