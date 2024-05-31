@@ -48,33 +48,6 @@ namespace CppAst
         public List<CppTemplateArgument> TemplateArguments { get; } = new List<CppTemplateArgument>();
 
         /// <inheritdoc />
-        public override bool Equals(object obj)
-        {
-            return ReferenceEquals(this, obj) || obj is CppUnexposedType other && Equals(other);
-        }
-
-        /// <inheritdoc />
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                var hashCode =(base.GetHashCode() * 397) ^ Name.GetHashCode();
-
-                foreach (var templateParameter in TemplateParameters)
-                {
-                    hashCode = (hashCode * 397) ^ templateParameter.GetHashCode();
-                }
-
-                foreach (var templateArgument in TemplateArguments)
-                {
-                    hashCode = (hashCode * 397) ^ templateArgument.GetHashCode();
-                }
-
-                return hashCode;
-            }
-        }
-
-        /// <inheritdoc />
         public override CppType GetCanonicalType() => this;
 
         /// <inheritdoc />

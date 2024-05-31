@@ -114,47 +114,7 @@ namespace CppAst
         }
 
         /// <inheritdoc />
-        public override bool Equals(object obj)
-        {
-            return ReferenceEquals(this, obj) || obj is CppTemplateArgument other && Equals(other);
-        }
-
-        /// <inheritdoc />
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                var result = (base.GetHashCode() * 397) ^
-                    ArgKind.GetHashCode() ^
-                    ArgAsInteger.GetHashCode() ^
-                    SourceParam.GetHashCode() ^
-                    IsSpecializedArgument.GetHashCode();
-
-                if (ArgAsType != null)
-                {
-                    result ^= ArgAsType.GetHashCode();
-                }
-
-                if (ArgAsUnknown != null)
-                {
-                    result ^= ArgAsUnknown.GetHashCode();
-                }
-
-                if (ArgAsExpression != null)
-                {
-                    result ^= ArgAsExpression.GetHashCode();
-                }
-
-                return result;
-            }
-        }
-
-
-        /// <inheritdoc />
         public override CppType GetCanonicalType() => this;
-
-        /// <inheritdoc />
-
 
         /// <inheritdoc />
         public override string ToString() => $"{SourceParam} = {ArgString}";
