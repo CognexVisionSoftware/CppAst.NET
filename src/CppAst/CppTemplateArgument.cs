@@ -146,6 +146,11 @@ namespace CppAst
                 }
 
                 return result;
+            }
+        }
+
+
+        /// <inheritdoc />
         public override CppType GetCanonicalType() => this;
 
         /// <inheritdoc />
