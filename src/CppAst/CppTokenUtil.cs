@@ -23,21 +23,28 @@ namespace CppAst
             if (tokenIt.CanPeek && tokenIt.PeekText() == "template")
                 SkipTemplates(tokenIt);
 
+            bool foundAttribute = false;
             while (tokenIt.CanPeek)
             {
                 if (ParseAttributes(globalContainer, tokenIt, ref attributes))
                 {
+                    foundAttribute = true;
                     continue;
                 }
 
-                // If we have a keyword, try to skip it and process following elements
-                // for example attribute put right after a struct __declspec(uuid("...")) Test {...}
-                if (tokenIt.Peek().Kind == CppTokenKind.Keyword)
+                // If we've found an attribute, and the current token is a keyword or identifier, try to skip it to process next tokens
+                // for example attribute put right after a struct __declspec(uuid("...")) Test {...} we will get the uuid which is the
+                // attribute we are extacting. For other cases like using mytype [[attribute]] = type; we will extract attribute. Because
+                // classes containt all the tokens in a class we will also stop parsing attributes if we hit an open { character. This is
+                // important to do otherwise you'll pick up every attribute in the class, for example those on functions, which are not
+                // class attributes and shouldn't be added as a class attribute. This will also stop parsing inline functions as well
+                //  although they should cause any problems even if we didn't since they would only contain the tokens for the function.
+                if (foundAttribute && (tokenIt.Peek().Kind == CppTokenKind.Keyword || tokenIt.Peek().Kind == CppTokenKind.Identifier) ||
+                    (tokenIt.PeekText() == "{"))
                 {
-                    tokenIt.Next();
-                    continue;
+                    break;
                 }
-                break;
+                tokenIt.Next();
             }
         }
 
@@ -131,7 +138,6 @@ namespace CppAst
             // if this is a template then we need to skip that ?
             if (tokenIt.CanPeek && tokenIt.PeekText() == "template")
                 SkipTemplates(tokenIt);
-
             while (tokenIt.CanPeek)
             {
                 if (ParseAttributes(globalContainer, tokenIt, ref collectAttributes))
@@ -170,19 +176,6 @@ namespace CppAst
                 }
 
                 return cntOffset;
-            };
-
-            int ToLineStart(ReadOnlySpan<byte> cnt, int cntOffset)
-            {
-                for (int i = cntOffset; i >= 0; i--)
-                {
-                    char ch = (char)cnt[i];
-                    if (ch == '\n')
-                    {
-                        return i + 1;
-                    }
-                }
-                return 0;
             };
 
             bool IsAttributeEnd(ReadOnlySpan<byte> cnt, int cntOffset)
@@ -225,16 +218,6 @@ namespace CppAst
             {
                 cntOffset -= 2;
                 return cntOffset;
-            };
-
-            string QueryLineContent(ReadOnlySpan<byte> cnt, int startOffset, int endOffset)
-            {
-                StringBuilder sb = new StringBuilder();
-                for (int i = startOffset; i <= endOffset; i++)
-                {
-                    sb.Append((char)cnt[i]);
-                }
-                return sb.ToString();
             };
 
             CXSourceLocation location = cursor.Extent.Start;
