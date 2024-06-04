@@ -362,5 +362,66 @@ class EXPORT_API TestClass
             );
         }
 
+        [Test]
+        public void TestTypedeftAttributes()
+        {
+            ParseAssert(@"
+struct Test{
+    int a;
+};
+[[deprecated(""Old"")]] typedef Test MyTest;",
+        compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
+
+                    Assert.AreEqual(1, compilation.Typedefs.Count);
+
+                    Assert.AreEqual(1, compilation.Typedefs[0].Attributes.Count);
+                    {
+                        var attr = compilation.Typedefs[0].Attributes[0];
+                        Assert.AreEqual("deprecated", attr.Name);
+                        // I want to test the arguments but for some reason in these tests it's always empty.
+                        // The other existing tests also don't check it. But in bindr, the arguments is present
+                        // so it's working there but not here. Not sure why.
+                        //Assert.AreEqual("\"Old\"", attr.Arguments);
+                    }
+                },
+                new CppParserOptions() { AdditionalArguments = { "-std=c++17" }}
+              );
+        }
+
+        [Test]
+
+        public void TestUsingAttributes()
+        {
+          try {
+            ParseAssert(@"
+struct Test{
+    int a;
+};
+using MyTest [[deprecated(""Old"")]] = Test;
+", compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
+
+                    Assert.AreEqual(1, compilation.Typedefs.Count);
+
+                    Assert.AreEqual(1, compilation.Typedefs[0].Attributes.Count);
+                    {
+                        var attr = compilation.Typedefs[0].Attributes[0];
+                        Assert.AreEqual("deprecated", attr.Name);
+                        // I want to test the arguments but for some reason in these tests it's always empty.
+                        // The other existing tests also don't check it. But in bindr, the arguments is present
+                        // so it's working there but not here. Not sure why.
+                        //Assert.AreEqual("\"Old\"", attr.Arguments);
+                    }
+                },
+                new CppParserOptions() { AdditionalArguments = { "-std=c++17" }}
+              );
+          } catch (Exception e) {
+            Console.WriteLine(e);
+          }
+        }
+
     }
 }

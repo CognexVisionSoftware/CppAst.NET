@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Text;
+using System.Threading;
 using ClangSharp;
 using ClangSharp.Interop;
 
@@ -23,21 +24,20 @@ namespace CppAst
             if (tokenIt.CanPeek && tokenIt.PeekText() == "template")
                 SkipTemplates(tokenIt);
 
+            bool foundAttribute = false;
             while (tokenIt.CanPeek)
             {
                 if (ParseAttributes(globalContainer, tokenIt, ref attributes))
                 {
+                    foundAttribute = true;
                     continue;
                 }
 
-                // If we have a keyword, try to skip it and process following elements
-                // for example attribute put right after a struct __declspec(uuid("...")) Test {...}
-                if (tokenIt.Peek().Kind == CppTokenKind.Keyword)
+                if (foundAttribute && (tokenIt.Peek().Kind == CppTokenKind.Keyword || tokenIt.Peek().Kind == CppTokenKind.Identifier))
                 {
-                    tokenIt.Next();
-                    continue;
+                    break;
                 }
-                break;
+                tokenIt.Next();
             }
         }
 
@@ -131,7 +131,6 @@ namespace CppAst
             // if this is a template then we need to skip that ?
             if (tokenIt.CanPeek && tokenIt.PeekText() == "template")
                 SkipTemplates(tokenIt);
-
             while (tokenIt.CanPeek)
             {
                 if (ParseAttributes(globalContainer, tokenIt, ref collectAttributes))
@@ -170,19 +169,6 @@ namespace CppAst
                 }
 
                 return cntOffset;
-            };
-
-            int ToLineStart(ReadOnlySpan<byte> cnt, int cntOffset)
-            {
-                for (int i = cntOffset; i >= 0; i--)
-                {
-                    char ch = (char)cnt[i];
-                    if (ch == '\n')
-                    {
-                        return i + 1;
-                    }
-                }
-                return 0;
             };
 
             bool IsAttributeEnd(ReadOnlySpan<byte> cnt, int cntOffset)
@@ -225,16 +211,6 @@ namespace CppAst
             {
                 cntOffset -= 2;
                 return cntOffset;
-            };
-
-            string QueryLineContent(ReadOnlySpan<byte> cnt, int startOffset, int endOffset)
-            {
-                StringBuilder sb = new StringBuilder();
-                for (int i = startOffset; i <= endOffset; i++)
-                {
-                    sb.Append((char)cnt[i]);
-                }
-                return sb.ToString();
             };
 
             CXSourceLocation location = cursor.Extent.Start;
