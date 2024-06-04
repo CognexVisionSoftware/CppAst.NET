@@ -172,19 +172,6 @@ namespace CppAst
                 return cntOffset;
             };
 
-            int ToLineStart(ReadOnlySpan<byte> cnt, int cntOffset)
-            {
-                for (int i = cntOffset; i >= 0; i--)
-                {
-                    char ch = (char)cnt[i];
-                    if (ch == '\n')
-                    {
-                        return i + 1;
-                    }
-                }
-                return 0;
-            };
-
             bool IsAttributeEnd(ReadOnlySpan<byte> cnt, int cntOffset)
             {
                 if (cntOffset < 1) return false;
@@ -225,16 +212,6 @@ namespace CppAst
             {
                 cntOffset -= 2;
                 return cntOffset;
-            };
-
-            string QueryLineContent(ReadOnlySpan<byte> cnt, int startOffset, int endOffset)
-            {
-                StringBuilder sb = new StringBuilder();
-                for (int i = startOffset; i <= endOffset; i++)
-                {
-                    sb.Append((char)cnt[i]);
-                }
-                return sb.ToString();
             };
 
             CXSourceLocation location = cursor.Extent.Start;

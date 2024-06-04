@@ -299,7 +299,7 @@ namespace CppAst
                 // it only works with constructors
                 if (childCursor.Kind == CXCursorKind.CXCursor_OverloadedDeclRef)
                 {
-                    // We simply copy the overloaded functions into the current class 
+                    // We simply copy the overloaded functions into the current class
                     for (uint i=0;i< childCursor.NumOverloadedDecls; i++)
                     {
                         VisitFunctionDecl(cursor, childCursor.GetOverloadedDecl(i), parent, clientData);
@@ -1647,6 +1647,7 @@ namespace CppAst
             else
             {
                 var typedef = new CppTypedef(GetCursorSpelling(cursor), underlyingTypeDefType) { Visibility = contextContainer.CurrentVisibility };
+                ParseAttributes(cursor, typedef, true);
                 contextContainer.DeclarationContainer.Typedefs.Add(typedef);
                 type = typedef;
             }
@@ -1683,6 +1684,7 @@ namespace CppAst
             else
             {
                 var typedef = new CppTypedef(GetCursorSpelling(cursor), underlyingTypeDefType) { Visibility = contextContainer.CurrentVisibility };
+                ParseAttributes(cursor, typedef, true);
                 contextContainer.DeclarationContainer.Typedefs.Add(typedef);
                 type = typedef;
             }
@@ -1889,7 +1891,7 @@ namespace CppAst
                             type = type.InjectedSpecializationType;
                         }
 
-                        var templateParams = new List<CppType>(); 
+                        var templateParams = new List<CppType>();
                         var templateArguments = new Dictionary<CppType, List<CppTemplateArgument>>();
 
                         for (uint i = 0; i < type.Declaration.NumTemplateParameterLists; i++)
@@ -1905,7 +1907,7 @@ namespace CppAst
                             }
                         }
 
-                        if (templateParams.Count > 0) 
+                        if (templateParams.Count > 0)
                         {
                             templateArguments = ParseTemplateArguments(templateParams, cursor, type, data);
                         }
@@ -2112,7 +2114,7 @@ namespace CppAst
          * parameter might be resolved multiple times in the callstack, so we keep overwriting the resolved
          * arguments with "fresher" values as we walk upward in the call stack, so the last value will be the
          * finally resolve template arguments.
-         * This dictionary will be converted to a regular list at the end, so that to able to keep the 
+         * This dictionary will be converted to a regular list at the end, so that to able to keep the
          * user's expectation, e.g. to be able to access the template argument in an indexed manner.
          */
 
