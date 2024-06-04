@@ -555,6 +555,95 @@ struct Test{
           );
         }
 
+        [Test]
+        public void TestCpp17UsingAttributes()
+        {
+            ParseAssert(@"
+struct Test{
+    int a;
+};
+using MyTest [[cppast(""old"")]] = Test;
+", compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
 
+                    Assert.AreEqual(1, compilation.Typedefs.Count);
+
+                    Assert.AreEqual(1, compilation.Typedefs[0].TokenAttributes.Count);
+                    {
+                        var attr = compilation.Typedefs[0].TokenAttributes[0];
+                        Assert.AreEqual("cppast", attr.Name);
+                        Assert.AreEqual("\"old\"", attr.Arguments);
+                        Console.WriteLine("Done");
+                    }
+                },
+                new CppParserOptions() { AdditionalArguments = { "-std=c++17" }, ParseTokenAttributes = true }
+              );
+        }
+
+        [Test]
+        public void TestCpp17ManyTokens()
+        {
+            ParseAssert(@"
+struct [[cppast(""class"")]] [[deprecated]] Test{
+   [[nodiscard]] int a();
+};
+using MyTest [[cppast(""old"")]] = Test;
+", compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
+                    Assert.AreEqual(1, compilation.Classes.Count);
+                    Assert.AreEqual(2, compilation.Classes[0].TokenAttributes.Count);
+                    {
+                        var attr = compilation.Classes[0].TokenAttributes[0];
+                        Assert.AreEqual("cppast", attr.Name);
+                        Assert.AreEqual("\"class\"", attr.Arguments);
+                        attr = compilation.Classes[0].TokenAttributes[1];
+                        Assert.AreEqual("deprecated", attr.Name);
+                    }
+
+                    Assert.AreEqual(1, compilation.Classes[0].Functions.Count);
+                    Assert.AreEqual(1, compilation.Classes[0].Functions[0].TokenAttributes.Count);
+                    {
+                        var attr = compilation.Classes[0].Functions[0].TokenAttributes[0];
+                        Assert.AreEqual("nodiscard", attr.Name);
+                    }
+
+                    Assert.AreEqual(1, compilation.Typedefs.Count);
+                    Assert.AreEqual(1, compilation.Typedefs[0].TokenAttributes.Count);
+                    {
+                        var attr = compilation.Typedefs[0].TokenAttributes[0];
+                        Assert.AreEqual("cppast", attr.Name);
+                        Assert.AreEqual("\"old\"", attr.Arguments);
+                        Console.WriteLine("Done");
+                    }
+                },
+                new CppParserOptions() { AdditionalArguments = { "-std=c++17" }, ParseTokenAttributes = true }
+              );
+        }
+
+        [Test]
+        public void TestCpp17NoStructAttributeHasMemberAttribute()
+        {
+            ParseAssert(@"
+struct Test {
+   [[nodiscard]] int a();
+};
+", compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
+                    Assert.AreEqual(1, compilation.Classes.Count);
+                    Assert.AreEqual(0, compilation.Classes[0].TokenAttributes.Count);
+
+                    Assert.AreEqual(1, compilation.Classes[0].Functions.Count);
+                    Assert.AreEqual(1, compilation.Classes[0].Functions[0].TokenAttributes.Count);
+                    {
+                        var attr = compilation.Classes[0].Functions[0].TokenAttributes[0];
+                        Assert.AreEqual("nodiscard", attr.Name);
+                    }
+                },
+                new CppParserOptions() { AdditionalArguments = { "-std=c++17" }, ParseTokenAttributes = true }
+              );
+        }
     }
 }
