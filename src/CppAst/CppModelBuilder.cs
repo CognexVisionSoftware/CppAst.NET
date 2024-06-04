@@ -20,6 +20,7 @@ namespace CppAst
     /// </summary>
     internal unsafe class CppModelBuilder
     {
+        bool hitme;
         private readonly CppContainerContext _rootContainerContext;
         private readonly Dictionary<string, CppContainerContext> _containers;
         private readonly Dictionary<string, CppType> _typedefs;
@@ -299,7 +300,7 @@ namespace CppAst
                 // it only works with constructors
                 if (childCursor.Kind == CXCursorKind.CXCursor_OverloadedDeclRef)
                 {
-                    // We simply copy the overloaded functions into the current class 
+                    // We simply copy the overloaded functions into the current class
                     for (uint i=0;i< childCursor.NumOverloadedDecls; i++)
                     {
                         VisitFunctionDecl(cursor, childCursor.GetOverloadedDecl(i), parent, clientData);
@@ -1596,10 +1597,21 @@ namespace CppAst
             //Parse attributes online
             if (needOnlineSeek)
             {
-                bool hasOnlineAttribute = CppTokenUtil.TryToSeekOnlineAttributes(cursor, out var onLineRange);
+                bool hasOnlineAttribute = false;
+                CXSourceRange onLineRange;
+                if (hitme)
+                {
+                   hasOnlineAttribute = CppTokenUtil.TryToSeekOnlineAttributesForward(cursor, out onLineRange);
+                }
+                else
+                {
+                   hasOnlineAttribute = CppTokenUtil.TryToSeekOnlineAttributes(cursor, out onLineRange);
+                }
                 if (hasOnlineAttribute)
                 {
-                    CppTokenUtil.ParseAttributesInRange(_rootContainerContext.Container as CppGlobalDeclarationContainer, cursor.TranslationUnit, onLineRange, ref tokenAttributes);
+                    CppTokenUtil.ParseAttributesInRange(_rootContainerContext.Container as CppGlobalDeclarationContainer, cursor.TranslationUnit, onLineRange, ref tokenAttributes, hitme);
+                    if (hitme)
+                        Console.Write("Hit me");
                 }
             }
 
@@ -1611,10 +1623,14 @@ namespace CppAst
             }
             else
             {
-                CppTokenUtil.ParseCursorAttributs(_rootContainerContext.Container as CppGlobalDeclarationContainer, cursor, ref tokenAttributes);
+                if (hitme)
+                    Console.Write("Hit me");
+                CppTokenUtil.ParseCursorAttributs(_rootContainerContext.Container as CppGlobalDeclarationContainer, cursor, ref tokenAttributes, hitme);
             }
 
             attrContainer.TokenAttributes.AddRange(tokenAttributes);
+            if (hitme)
+                Console.Write("Hit me");
         }
 
 
@@ -1647,6 +1663,9 @@ namespace CppAst
             else
             {
                 var typedef = new CppTypedef(GetCursorSpelling(cursor), underlyingTypeDefType) { Visibility = contextContainer.CurrentVisibility };
+                hitme = true;
+                ParseAttributes(cursor, typedef, false);
+                hitme = false;
                 contextContainer.DeclarationContainer.Typedefs.Add(typedef);
                 type = typedef;
             }
@@ -1683,6 +1702,9 @@ namespace CppAst
             else
             {
                 var typedef = new CppTypedef(GetCursorSpelling(cursor), underlyingTypeDefType) { Visibility = contextContainer.CurrentVisibility };
+                hitme = true;
+                ParseAttributes(cursor, typedef, false);
+                hitme = false;
                 contextContainer.DeclarationContainer.Typedefs.Add(typedef);
                 type = typedef;
             }
@@ -1889,7 +1911,7 @@ namespace CppAst
                             type = type.InjectedSpecializationType;
                         }
 
-                        var templateParams = new List<CppType>(); 
+                        var templateParams = new List<CppType>();
                         var templateArguments = new Dictionary<CppType, List<CppTemplateArgument>>();
 
                         for (uint i = 0; i < type.Declaration.NumTemplateParameterLists; i++)
@@ -1905,7 +1927,7 @@ namespace CppAst
                             }
                         }
 
-                        if (templateParams.Count > 0) 
+                        if (templateParams.Count > 0)
                         {
                             templateArguments = ParseTemplateArguments(templateParams, cursor, type, data);
                         }
@@ -2112,7 +2134,7 @@ namespace CppAst
          * parameter might be resolved multiple times in the callstack, so we keep overwriting the resolved
          * arguments with "fresher" values as we walk upward in the call stack, so the last value will be the
          * finally resolve template arguments.
-         * This dictionary will be converted to a regular list at the end, so that to able to keep the 
+         * This dictionary will be converted to a regular list at the end, so that to able to keep the
          * user's expectation, e.g. to be able to access the template argument in an indexed manner.
          */
 

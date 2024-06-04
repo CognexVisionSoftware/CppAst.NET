@@ -555,6 +555,30 @@ struct Test{
           );
         }
 
+        [Test]
+        public void TestCpp17UsingAttributes()
+        {
+            ParseAssert(@"
+struct Test{
+    int a;
+};
+using MyTest [[cppast(""old"")]] = Test;
+", compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
 
+                    Assert.AreEqual(1, compilation.Typedefs.Count);
+
+                    Assert.AreEqual(1, compilation.Typedefs[0].TokenAttributes.Count);
+                    {
+                        var attr = compilation.Typedefs[0].TokenAttributes[0];
+                        Assert.AreEqual("cppast", attr.Name);
+                        Assert.AreEqual("\"old\"", attr.Arguments);
+                        Console.WriteLine("Done");
+                    }
+                },
+                new CppParserOptions() { AdditionalArguments = { "-std=c++17" }, ParseTokenAttributes = true }
+              );
+        }
     }
 }
