@@ -15,7 +15,7 @@ namespace CppAst
 {
     static internal unsafe class CppTokenUtil
     {
-        public static void ParseCursorAttributs(CppGlobalDeclarationContainer globalContainer, CXCursor cursor, ref List<CppAttribute> attributes, bool hitme = false)
+        public static void ParseCursorAttributs(CppGlobalDeclarationContainer globalContainer, CXCursor cursor, ref List<CppAttribute> attributes)
         {
             var tokenizer = new AttributeTokenizer(cursor);
             var tokenIt = new TokenIterator(tokenizer);
@@ -26,25 +26,13 @@ namespace CppAst
 
             while (tokenIt.CanPeek)
             {
-                if (hitme)
-                    Console.Write("Hit me");
-                if (ParseAttributes(globalContainer, tokenIt, ref attributes, hitme))
+                if (ParseAttributes(globalContainer, tokenIt, ref attributes))
                 {
                     continue;
                 }
 
-                // If we have a keyword, try to skip it and process following elements
-                // for example attribute put right after a struct __declspec(uuid("...")) Test {...}
-                if (tokenIt.Peek().Kind == CppTokenKind.Keyword)
-                {
-                    tokenIt.Next();
-                    continue;
-                }
                 tokenIt.Next();
-                //break;
             }
-            if (hitme)
-                Console.WriteLine("ParseCursorAttributs");
         }
 
 
@@ -121,7 +109,7 @@ namespace CppAst
         }
 
 
-        public static void ParseAttributesInRange(CppGlobalDeclarationContainer globalContainer, CXTranslationUnit tu, CXSourceRange range, ref List<CppAttribute> collectAttributes, bool hitme = false)
+        public static void ParseAttributesInRange(CppGlobalDeclarationContainer globalContainer, CXTranslationUnit tu, CXSourceRange range, ref List<CppAttribute> collectAttributes)
         {
             var tokenizer = new AttributeTokenizer(tu, range);
             var tokenIt = new TokenIterator(tokenizer);
@@ -137,11 +125,9 @@ namespace CppAst
             // if this is a template then we need to skip that ?
             if (tokenIt.CanPeek && tokenIt.PeekText() == "template")
                 SkipTemplates(tokenIt);
-            if (hitme)
-              Console.WriteLine("ParseAttributesInRange");
             while (tokenIt.CanPeek)
             {
-                if (ParseAttributes(globalContainer, tokenIt, ref collectAttributes, hitme))
+                if (ParseAttributes(globalContainer, tokenIt, ref collectAttributes))
                 {
                     continue;
                 }
@@ -285,88 +271,6 @@ namespace CppAst
             {
                 var startLoc = cursor.TranslationUnit.GetLocationForOffset(file, (uint)lastSeekOffset);
                 var endLoc = cursor.TranslationUnit.GetLocationForOffset(file, (uint)offsetStart);
-                range = clang.getRange(startLoc, endLoc);
-                return true;
-            }
-        }
-
-        public static bool TryToSeekOnlineAttributesForward(CXCursor cursor, out CXSourceRange range)
-        {
-            bool IsAttributeStart(ReadOnlySpan<byte> cnt, int cntOffset)
-            {
-                if (cntOffset + 1 >= cnt.Length) return false;
-
-                char ch0 = (char)cnt[cntOffset];
-                char ch1 = (char)cnt[cntOffset + 1];
-
-                return ch0 == ch1 && ch0 == '[';
-            };
-
-            bool IsAttributeEnd(ReadOnlySpan<byte> cnt, int cntOffset)
-            {
-                if (cntOffset + 1 >= cnt.Length) return false;
-
-                char ch0 = (char)cnt[cntOffset];
-                char ch1 = (char)cnt[cntOffset + 1];
-
-                return ch0 == ch1 && ch0 == ']';
-            };
-
-            CXSourceLocation location = cursor.Extent.Start;
-            location.GetFileLocation(out var file, out var line, out var column, out var offset);
-            var contents = cursor.TranslationUnit.GetFileContents(file, out var fileSize);
-
-            AttributeLexerParseStatus status = AttributeLexerParseStatus.SeekAttributeStart;
-            int offsetStart = (int)offset + 1;   // Start from the next position
-            int lastSeekOffset = offsetStart;
-            int curOffset = offsetStart;
-            while (curOffset < contents.Length)
-            {
-                switch (status)
-                {
-                    case AttributeLexerParseStatus.SeekAttributeStart:
-                        {
-                            if (!IsAttributeStart(contents, curOffset))
-                            {
-                                curOffset++;
-                            }
-                            else
-                            {
-                                curOffset += 2; // Skip the attribute start
-                                lastSeekOffset = curOffset;
-                                status = AttributeLexerParseStatus.SeekAttributeEnd;
-                            }
-                        }
-                        break;
-                    case AttributeLexerParseStatus.SeekAttributeEnd:
-                        {
-                            if (!IsAttributeEnd(contents, curOffset))
-                            {
-                                curOffset++;
-                            }
-                            else
-                            {
-                                //curOffset -= 1; //  Move off the end attribute character ]
-                                status = AttributeLexerParseStatus.Error;
-                            }
-                        }
-                        break;
-                }
-
-                if (status == AttributeLexerParseStatus.Error)
-                {
-                    break;
-                }
-            }
-            if (lastSeekOffset == offsetStart)
-            {
-                range = new CXSourceRange();
-                return false;
-            }
-            else
-            {
-                var startLoc = cursor.TranslationUnit.GetLocationForOffset(file, (uint)lastSeekOffset-2);
-                var endLoc = cursor.TranslationUnit.GetLocationForOffset(file, (uint)(curOffset+2));
                 range = clang.getRange(startLoc, endLoc);
                 return true;
             }
@@ -1016,29 +920,18 @@ namespace CppAst
             }
         }
 
-        private static int count = 0;
-
-        private static bool ParseAttributes(CppGlobalDeclarationContainer globalContainer, TokenIterator tokenIt, ref List<CppAttribute> attributes, bool hitme = false)
+        private static bool ParseAttributes(CppGlobalDeclarationContainer globalContainer, TokenIterator tokenIt, ref List<CppAttribute> attributes)
         {
-            count++;
-            if (hitme)
-              Console.WriteLine("ParseAttributes");
             // Parse C++ attributes
             // [[<attribute>]]
-            if (hitme && count == 2)
-              Console.WriteLine("Hit me");
             if (tokenIt.Skip("[", "["))
             {
-                if (hitme)
-                    Console.Write("Hit me");
-                while (ParseAttribute(tokenIt, out var attribute, hitme))
+                while (ParseAttribute(tokenIt, out var attribute))
                 {
                     if (attributes == null)
                     {
                         attributes = new List<CppAttribute>();
                     }
-                    if (hitme)
-                        Console.Write("Hit me");
                     attributes.Add(attribute);
 
                     tokenIt.Skip(",");
@@ -1129,13 +1022,11 @@ namespace CppAst
             return false;
         }
 
-        private static bool ParseAttribute(TokenIterator tokenIt, out CppAttribute attribute, bool hitme=false)
+        private static bool ParseAttribute(TokenIterator tokenIt, out CppAttribute attribute)
         {
             // (identifier ::)? identifier ('(' tokens ')' )? (...)?
             attribute = null;
             var token = tokenIt.Peek();
-            if (hitme)
-                Console.Write("Hit me");
             if (token == null || !token.Kind.IsIdentifierOrKeyword())
             {
                 return false;

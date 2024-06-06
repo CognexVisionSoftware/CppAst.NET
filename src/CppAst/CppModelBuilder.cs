@@ -20,7 +20,6 @@ namespace CppAst
     /// </summary>
     internal unsafe class CppModelBuilder
     {
-        bool hitme;
         private readonly CppContainerContext _rootContainerContext;
         private readonly Dictionary<string, CppContainerContext> _containers;
         private readonly Dictionary<string, CppType> _typedefs;
@@ -1597,21 +1596,10 @@ namespace CppAst
             //Parse attributes online
             if (needOnlineSeek)
             {
-                bool hasOnlineAttribute = false;
-                CXSourceRange onLineRange;
-                if (hitme)
-                {
-                   hasOnlineAttribute = CppTokenUtil.TryToSeekOnlineAttributesForward(cursor, out onLineRange);
-                }
-                else
-                {
-                   hasOnlineAttribute = CppTokenUtil.TryToSeekOnlineAttributes(cursor, out onLineRange);
-                }
+                bool hasOnlineAttribute = CppTokenUtil.TryToSeekOnlineAttributes(cursor, out var onLineRange);
                 if (hasOnlineAttribute)
                 {
-                    CppTokenUtil.ParseAttributesInRange(_rootContainerContext.Container as CppGlobalDeclarationContainer, cursor.TranslationUnit, onLineRange, ref tokenAttributes, hitme);
-                    if (hitme)
-                        Console.Write("Hit me");
+                    CppTokenUtil.ParseAttributesInRange(_rootContainerContext.Container as CppGlobalDeclarationContainer, cursor.TranslationUnit, onLineRange, ref tokenAttributes);
                 }
             }
 
@@ -1623,14 +1611,10 @@ namespace CppAst
             }
             else
             {
-                if (hitme)
-                    Console.Write("Hit me");
-                CppTokenUtil.ParseCursorAttributs(_rootContainerContext.Container as CppGlobalDeclarationContainer, cursor, ref tokenAttributes, hitme);
+                CppTokenUtil.ParseCursorAttributs(_rootContainerContext.Container as CppGlobalDeclarationContainer, cursor, ref tokenAttributes);
             }
 
             attrContainer.TokenAttributes.AddRange(tokenAttributes);
-            if (hitme)
-                Console.Write("Hit me");
         }
 
 
@@ -1663,9 +1647,7 @@ namespace CppAst
             else
             {
                 var typedef = new CppTypedef(GetCursorSpelling(cursor), underlyingTypeDefType) { Visibility = contextContainer.CurrentVisibility };
-                hitme = true;
                 ParseAttributes(cursor, typedef, false);
-                hitme = false;
                 contextContainer.DeclarationContainer.Typedefs.Add(typedef);
                 type = typedef;
             }
@@ -1702,9 +1684,7 @@ namespace CppAst
             else
             {
                 var typedef = new CppTypedef(GetCursorSpelling(cursor), underlyingTypeDefType) { Visibility = contextContainer.CurrentVisibility };
-                hitme = true;
                 ParseAttributes(cursor, typedef, false);
-                hitme = false;
                 contextContainer.DeclarationContainer.Typedefs.Add(typedef);
                 type = typedef;
             }
