@@ -138,9 +138,9 @@ char function3(char);
                         Assert.AreEqual(1, cppFunction.Parameters.Count);
                         Assert.AreEqual(string.Empty, cppFunction.Parameters[0].Name);
                         Assert.AreEqual(CppTypeKind.Primitive, cppFunction.Parameters[0].Type.TypeKind);
-                        Assert.AreEqual(CppPrimitiveKind.UnsignedChar, ((CppPrimitiveType)cppFunction.Parameters[0].Type).Kind);
+                        Assert.AreEqual(CppPrimitiveKind.Char, ((CppPrimitiveType)cppFunction.Parameters[0].Type).Kind);
                         Assert.AreEqual(CppTypeKind.Primitive, cppFunction.ReturnType.TypeKind);
-                        Assert.AreEqual(CppPrimitiveKind.UnsignedChar, ((CppPrimitiveType)cppFunction.ReturnType).Kind);
+                        Assert.AreEqual(CppPrimitiveKind.Char, ((CppPrimitiveType)cppFunction.ReturnType).Kind);
                     }
                 },
                 options

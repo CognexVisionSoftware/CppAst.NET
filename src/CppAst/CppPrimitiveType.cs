@@ -32,6 +32,11 @@ namespace CppAst
         public static readonly CppPrimitiveType Char = new CppPrimitiveType(CppPrimitiveKind.Char);
 
         /// <summary>
+        /// Singleton instance of the `signed char` type.
+        /// </summary>
+        public static readonly CppPrimitiveType SignedChar = new CppPrimitiveType(CppPrimitiveKind.SignedChar);
+
+        /// <summary>
         /// Singleton instance of the `short` type.
         /// </summary>
         public static readonly CppPrimitiveType Short = new CppPrimitiveType(CppPrimitiveKind.Short);
@@ -111,6 +116,9 @@ namespace CppAst
                 case CppPrimitiveKind.WChar:
                     sizeOf = 2;
                     break;
+                case CppPrimitiveKind.SignedChar:
+                    sizeOf = 1;
+                    break;
                 case CppPrimitiveKind.Char:
                     sizeOf = 1;
                     break;
@@ -160,6 +168,8 @@ namespace CppAst
                     return "wchar";
                 case CppPrimitiveKind.Char:
                     return "char";
+                case CppPrimitiveKind.SignedChar:
+                    return "signed char";
                 case CppPrimitiveKind.Short:
                     return "short";
                 case CppPrimitiveKind.Int:

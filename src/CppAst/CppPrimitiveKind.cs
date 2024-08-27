@@ -30,6 +30,11 @@ namespace CppAst
         Char,
 
         /// <summary>
+        /// C++ `signed char`
+        /// </summary>
+        SignedChar,
+
+        /// <summary>
         /// C++ `short`
         /// </summary>
         Short,

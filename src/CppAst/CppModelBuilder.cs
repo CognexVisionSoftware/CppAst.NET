@@ -1798,15 +1798,12 @@ namespace CppAst
                     return CppPrimitiveType.UnsignedLongLong;
 
                 case CXTypeKind.CXType_SChar:
-                    return CppPrimitiveType.Char;
+                    return CppPrimitiveType.SignedChar;
 
+                // 'char' is used for characters, it is an implementation detail of the ploatform if it's signed or not
                 case CXTypeKind.CXType_Char_S:
-                    return CppPrimitiveType.Char;
-
-                // CXTypeKind.CXType_Char_U is a char type with unsigned implementation.
-                // To keep the implementation consistent this will be mapped to unsigned char.
                 case CXTypeKind.CXType_Char_U:
-                    return CppPrimitiveType.UnsignedChar;
+                    return CppPrimitiveType.Char;
 
                 case CXTypeKind.CXType_WChar:
                     return CppPrimitiveType.WChar;

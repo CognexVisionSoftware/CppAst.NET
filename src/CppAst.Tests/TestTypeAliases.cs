@@ -15,6 +15,7 @@ using Type_bool = bool;
 using Type_wchar = wchar_t ;
 
 using Type_char = char;
+using Type_signed_char = signed char;
 using Type_unsigned_char = unsigned char;
 
 using Type_short = short;
@@ -33,7 +34,7 @@ using Type_double = double;
                 {
                     Assert.False(compilation.HasErrors);
 
-                    Assert.AreEqual(13, compilation.Typedefs.Count);
+                    Assert.AreEqual(14, compilation.Typedefs.Count);
 
                     var primitives = new CppPrimitiveType[]
                     {
@@ -44,6 +45,7 @@ using Type_double = double;
                         CppPrimitiveType.WChar,
 
                         CppPrimitiveType.Char,
+                        CppPrimitiveType.SignedChar,
                         CppPrimitiveType.UnsignedChar,
 
                         CppPrimitiveType.Short,
