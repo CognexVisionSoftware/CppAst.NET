@@ -15,6 +15,7 @@ typedef bool Type_bool;
 typedef wchar_t Type_wchar;
 
 typedef char Type_char;
+typedef signed char Type_signed_char;
 typedef unsigned char Type_unsigned_char;
 
 typedef short Type_short;
@@ -33,7 +34,7 @@ typedef double Type_double;
                 {
                     Assert.False(compilation.HasErrors);
 
-                    Assert.AreEqual(13, compilation.Typedefs.Count);
+                    Assert.AreEqual(14, compilation.Typedefs.Count);
 
                     var primitives = new CppPrimitiveType[]
                     {
@@ -44,6 +45,7 @@ typedef double Type_double;
                         CppPrimitiveType.WChar,
 
                         CppPrimitiveType.Char,
+                        CppPrimitiveType.SignedChar,
                         CppPrimitiveType.UnsignedChar,
 
                         CppPrimitiveType.Short,
