@@ -73,7 +73,7 @@ char function3(char);
         [Test]
         public void TestSimpleArm()
         {
-             var options = new CppParserOptions();
+            var options = new CppParserOptions();
 
             options.TargetCpu = CppTargetCpu.ARM64;
             options.TargetCpuSub = string.Empty;
@@ -100,7 +100,7 @@ char function3(char);
                         Assert.AreEqual("function0", cppFunction.Name);
                         Assert.AreEqual(0, cppFunction.Parameters.Count);
                         Assert.AreEqual("void", cppFunction.ReturnType.ToString());
-                        
+
                         var cppFunction1 = compilation.FindByName<CppFunction>("function0");
                         Assert.AreEqual(cppFunction, cppFunction1);
                     }
@@ -111,10 +111,10 @@ char function3(char);
                         Assert.AreEqual(2, cppFunction.Parameters.Count);
                         Assert.AreEqual("a", cppFunction.Parameters[0].Name);
                         Assert.AreEqual(CppTypeKind.Primitive, cppFunction.Parameters[0].Type.TypeKind);
-                        Assert.AreEqual(CppPrimitiveKind.Int, ((CppPrimitiveType) cppFunction.Parameters[0].Type).Kind);
+                        Assert.AreEqual(CppPrimitiveKind.Int, ((CppPrimitiveType)cppFunction.Parameters[0].Type).Kind);
                         Assert.AreEqual("b", cppFunction.Parameters[1].Name);
                         Assert.AreEqual(CppTypeKind.Primitive, cppFunction.Parameters[1].Type.TypeKind);
-                        Assert.AreEqual(CppPrimitiveKind.Float, ((CppPrimitiveType) cppFunction.Parameters[1].Type).Kind);
+                        Assert.AreEqual(CppPrimitiveKind.Float, ((CppPrimitiveType)cppFunction.Parameters[1].Type).Kind);
                         Assert.AreEqual("int", cppFunction.ReturnType.ToString());
 
                         var cppFunction1 = compilation.FindByName<CppFunction>("function1");
@@ -145,8 +145,8 @@ char function3(char);
                 },
                 options
             );
-        }        
-        
+        }
+
         [Test]
         public void TestFunctionPrototype()
         {
@@ -276,7 +276,7 @@ int function1();
                         Assert.True(cppFunction.IsPublicExport());
                     }
                 },
-                new CppParserOptions() {  }
+                new CppParserOptions() { }
             );
 
             ParseAssert(text,
@@ -414,5 +414,35 @@ void functionX(Test<int,2> a = aa, Test<double,3> b = bb);
             );
         }
 
+        [Test]
+        public void TestStdFunction()
+        {
+            ParseAssert(@"
+#include <functional>
+
+void function1(std::function<int(int, int)> testFunction);
+",
+                compilation =>
+                {
+                    Assert.False(compilation.HasErrors);
+                    Assert.AreEqual(1, compilation.Functions.Count);
+                    var function = compilation.Functions[0];
+                    Assert.AreEqual("function1", function.Name);
+                    Assert.AreEqual(1, function.Parameters.Count);
+                    var parameter = function.Parameters[0];
+                    Assert.AreEqual("testFunction", parameter.Name);
+                    Assert.AreEqual(parameter.Type.TypeKind, CppTypeKind.StructOrClass);
+                    var parameterTemplate = (CppClass)parameter.Type;
+                    Assert.AreEqual(parameterTemplate.TemplateArguments.Count, 1);
+                    var parameterTemplateArgument = parameterTemplate.TemplateArguments[0].ArgAsType;
+                    Assert.AreEqual(parameterTemplateArgument.TypeKind, CppTypeKind.Function);
+                    var parameterFunction = (CppFunctionType)parameterTemplateArgument;
+                    Assert.AreEqual(parameterFunction.ReturnType.ToString(), "int");
+                    Assert.AreEqual(parameterFunction.Parameters.Count, 2);
+                    Assert.AreEqual(parameterFunction.Parameters[0].Type.ToString(), "int");
+                    Assert.AreEqual(parameterFunction.Parameters[1].Type.ToString(), "int");
+                }
+            );
+        }
     }
 }

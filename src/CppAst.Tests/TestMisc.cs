@@ -114,7 +114,7 @@ using FooInt = Foo<int, double, char, long>;
                     Assert.AreEqual(2, compilation.Classes.Count);
                     Assert.AreEqual(2, compilation.Classes[0].Constructors.Count);
                     Assert.AreEqual(1, compilation.Classes[0].Constructors[0].Parameters.Count);
-                    Assert.AreEqual("foo", compilation.Classes[0].Constructors[0].Parameters[0].Name );
+                    Assert.AreEqual("foo", compilation.Classes[0].Constructors[0].Parameters[0].Name);
                     Assert.AreEqual(CppTypeKind.Reference, compilation.Classes[0].Constructors[0].Parameters[0].Type.TypeKind);
                     Assert.AreEqual(CppTypeKind.Qualified, (compilation.Classes[0].Constructors[0].Parameters[0].Type as CppReferenceType).ElementType.TypeKind);
                     Assert.AreEqual(CppTypeKind.StructOrClass, ((compilation.Classes[0].Constructors[0].Parameters[0].Type as CppReferenceType).ElementType as CppQualifiedType).ElementType.TypeKind);
