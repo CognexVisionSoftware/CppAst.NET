@@ -300,7 +300,7 @@ namespace CppAst
                 if (childCursor.Kind == CXCursorKind.CXCursor_OverloadedDeclRef)
                 {
                     // We simply copy the overloaded functions into the current class
-                    for (uint i=0;i< childCursor.NumOverloadedDecls; i++)
+                    for (uint i = 0; i < childCursor.NumOverloadedDecls; i++)
                     {
                         VisitFunctionDecl(cursor, childCursor.GetOverloadedDecl(i), parent, clientData);
                     }
@@ -1971,14 +1971,10 @@ namespace CppAst
                 CallingConvention = GetCallingConvention(type)
             };
 
-            // We don't use this but use the visitor children to try to recover the parameter names
-
-            //            for (uint i = 0; i < type.NumArgTypes; i++)
-            //            {
-            //                var argType = type.GetArgType(i);
-            //                var cppType = GetCppType(argType.Declaration, argType, type.Declaration, data);
-            //                cppFunction.ParameterTypes.Add(cppType);
-            //            }
+            // We try to use the visitor children to recover the parameter names, but there are times when
+            // the parents are not compatible with the visitor pattern. For example, the FunctionProto type
+            // is a template argument of a std::function, making its parent a ClassDecl. In this case, we
+            // use GetArgType() as a fallback.
 
             bool isParsingParameter = false;
             parent.VisitChildren((cxCursor, parent1, clientData) =>
@@ -1993,6 +1989,16 @@ namespace CppAst
                 }
                 return isParsingParameter ? CXChildVisitResult.CXChildVisit_Continue : CXChildVisitResult.CXChildVisit_Recurse;
             }, new CXClientData((IntPtr)data));
+
+            if (!isParsingParameter)
+            {
+                for (uint i = 0; i < type.NumArgTypes; i++)
+                {
+                    var argType = type.GetArgType(i);
+                    var cppType = GetCppType(argType.Declaration, argType, type.Declaration, data);
+                    cppFunction.Parameters.Add(new CppParameter(cppType, ""));
+                }
+            }
 
             return cppFunction;
         }
@@ -2033,7 +2039,7 @@ namespace CppAst
             result[sourceParam].Add(arg);
         }
 
-        private void ParseTemplateArgument(Dictionary<CppType, List<CppTemplateArgument>> result, CppType sourceParam, CX_TemplateArgument templateArg, CXCursor cursor, void * data)
+        private void ParseTemplateArgument(Dictionary<CppType, List<CppTemplateArgument>> result, CppType sourceParam, CX_TemplateArgument templateArg, CXCursor cursor, void* data)
         {
             switch (templateArg.kind)
             {
@@ -2115,7 +2121,7 @@ namespace CppAst
          * user's expectation, e.g. to be able to access the template argument in an indexed manner.
          */
 
-        private Dictionary<CppType, List<CppTemplateArgument>> ParseTemplateArguments(List<CppType> templateParams, CXCursor cursor, CXType type, void * data)
+        private Dictionary<CppType, List<CppTemplateArgument>> ParseTemplateArguments(List<CppType> templateParams, CXCursor cursor, CXType type, void* data)
         {
             var numTemplateArguments = type.NumTemplateArguments;
             if (numTemplateArguments < 0) return null;
@@ -2135,7 +2141,7 @@ namespace CppAst
                 // resolved to multiple template arguments.
                 // In my defence I went through libclang, ClangSharp to see whether there is any kind of direct mapping
                 // between the parameters and arguments, but found none until now.
-                var sourceParam = argIndex < templateParams.Count ? templateParams[argIndex] : templateParams[templateParams.Count-1];
+                var sourceParam = argIndex < templateParams.Count ? templateParams[argIndex] : templateParams[templateParams.Count - 1];
                 ParseTemplateArgument(templateArguments, sourceParam, templateArg, cursor, data);
             }
 
