@@ -1792,7 +1792,7 @@ namespace CppAst
                     return CppPrimitiveType.UnsignedInt;
 
                 case CXTypeKind.CXType_ULong:
-                    return CppPrimitiveType.UnsignedInt;
+                    return RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? CppPrimitiveType.UnsignedLongLong : CppPrimitiveType.UnsignedInt;
 
                 case CXTypeKind.CXType_ULongLong:
                     return CppPrimitiveType.UnsignedLongLong;
